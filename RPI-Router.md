@@ -1,14 +1,17 @@
 # Refferences 
+
 setup static IP, Setup interfaces lan, wan,https://www.technicallywizardry.com/building-your-own-router-raspberry-pi/
 firewall https://rob-ferguson.me/how-to-use-your-rpi-as-a-router/
 
 # Tutorial
+
 Firstly, define ip static of lan and wan, and note mac address.
 lan mac address d0:37:45:fc:2d:5a
 wan mac address dc:a6:32:64:c5:0f
 no need to setup wlan0 since we are using wan with UTL(USB to LAN).
 
 ## Set Interfaces Name
+
 Edit `/etc/udev/rules.d/10-network.rules` add interfaces name and mac address into it with format;
 ```sh
 SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="d0:37:45:fc:2d:5a", NAME="lan"
@@ -20,6 +23,7 @@ lan mac d0:37:45:fc:2d:5a
 wan mac dc:a6:32:64:c5:0f
 ```
 ## Set-Up interfaces name in network
+
 Add new file for every interfaces we want to creates,
 LAN interface
 `/etc/network/interfaces.d/lan` fill with,
@@ -43,6 +47,7 @@ allow-hotplug wan
 iface wan inet dhcp
 ```
 ## Setup DCHP SERVER
+
 We are plan to use isc-dhcp-server instead of dhcpcd also didn't setup for ipv6
 Disable dhcpcd and install isc-dhcp-server
 ``sh
@@ -75,4 +80,35 @@ host rpi {
 }
 ```
 ## Setup Firewall
+
 we will setting firewall for forwarding for ipv4.
+enable IP forwarding IPv4 and disable IPv6
+edit `/etc/sysctl.conf`
+```
+net.ipv4.ip_forward = 1
+#disable IPv6
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+```
+
+Install and Set Firewall
+```sh
+apt install -y iptables iptables-persistent
+```
+Add Routing between LAN and WAN
+```sh
+# lan
+iptables -t nat -A POSTROUTING -o lan -j MASQUERADE
+# allow connections between lan and wan
+iptables -A FORWARD -i wan -o lan -j ACCEPT
+iptables -A FORWARD -i lan -o wan -m state --state RELATED,ESTABLISHED -j ACCEPT
+```
+Check rules:
+```sh
+iptables -S
+```
+Saved Permanently
+```sh
+netfilter-persistent save
+```
