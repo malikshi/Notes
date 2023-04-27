@@ -50,7 +50,7 @@ iface wan inet dhcp
 
 We are plan to use isc-dhcp-server instead of dhcpcd also didn't setup for ipv6
 Disable dhcpcd and install isc-dhcp-server
-``sh
+```sh
 sudo systemctl disable dhcpcd
 sudo apt install isc-dhcp-server
 ```
