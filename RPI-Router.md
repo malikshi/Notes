@@ -54,9 +54,10 @@ Disable dhcpcd and install isc-dhcp-server
 sudo systemctl disable dhcpcd
 sudo apt install isc-dhcp-server
 ```
-Then edit `/etc/default/isc-dhcp-server`, replacing INTERFACESv4:
+Then edit `/etc/default/isc-dhcp-server`, replacing INTERFACESv4, and commented INTERFACESv6:
 ```sh
 INTERFACESv4="lan"
+#INTERFACESv6=""
 ```
 Edit `/etc/dhcp/dhcpd.conf` to first change the domain name and domain name servers, also set lease time
 ```sh
