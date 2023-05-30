@@ -6,8 +6,13 @@ firewall https://rob-ferguson.me/how-to-use-your-rpi-as-a-router/
 # Tutorial
 
 Firstly, define ip static of lan and wan, and note mac address.
-lan mac address d0:37:45:fc:2d:5a
-wan mac address dc:a6:32:64:c5:0f
+check your mac address by command `ifconfig`  see line with `ether` will show your mac address. define your mac address.
+
+Interface Name | Mac Address
+-------------- | -----------
+lan | d0:37:45:fc:2d:5a
+wan | dc:a6:32:64:c5:0f
+
 no need to setup wlan0 since we are using wan with UTL(USB to LAN).
 
 ## Set Interfaces Name
@@ -28,11 +33,8 @@ Add new file for every interfaces we want to creates,
 LAN interface
 `/etc/network/interfaces.d/lan` fill with,
 ```sh
+auto lan
 allow-hotplug lan
-#iface lan inet6 static
-#    address 2a01:7c8:d001:61::1
-#    netmask 48
-#    gateway 2a01:7c8:d001::1
 iface lan inet static
         address 192.168.100.1
         netmask 255.255.255.0
@@ -66,14 +68,21 @@ option domain-name-servers 1.1.1.1, 8.8.8.8, 9.9.9.9;
 
 default-lease-time 600;
 max-lease-time 604800;
-```
-Also add add the following:
-```sh
+
+ddns-update-style none;
+
 authoritative;
+```
+Also edit / add the following:
+```sh
 subnet 192.168.100.0 netmask 255.255.255.0 {
-range 192.168.100.3 192.168.100.254;
-option routers 192.168.100.1;
-option subnet-mask 255.255.255.0;
+        range 192.168.100.3 192.168.100.254;
+        option routers 192.168.100.1;
+        option subnet-mask 255.255.255.0;
+        option domain-name "rpi.local";
+        option domain-name-servers 1.1.1.1, 8.8.8.8, 9.9.9.9;
+        default-lease-time 600;
+        max-lease-time 604800;
 }
 host rpi {
         hardware ethernet d0:37:45:fc:2d:5a;
@@ -82,15 +91,15 @@ host rpi {
 ```
 ## Setup Firewall
 
-we will setting firewall for forwarding for ipv4.
-enable IP forwarding IPv4 and disable IPv6
+we will setting firewall for forwarding for ipv4 and ipv6.
+enable IP forwarding IPv4 and IPv6
 edit `/etc/sysctl.conf`
 ```
 net.ipv4.ip_forward = 1
-#disable IPv6
-net.ipv6.conf.all.disable_ipv6 = 1
-net.ipv6.conf.default.disable_ipv6 = 1
-net.ipv6.conf.lo.disable_ipv6 = 1
+net.ipv4.conf.all.forwarding = 1
+net.ipv4.conf.default.forwarding = 1
+net.ipv6.conf.all.forwarding = 1
+net.ipv6.conf.default.forwarding = 1
 ```
 Disable Firewalld
 ```sh
@@ -105,9 +114,11 @@ Add Routing between LAN and WAN
 ```sh
 # lan
 iptables -t nat -A POSTROUTING -o lan -j MASQUERADE
+# wan
+iptables -t nat -A POSTROUTING -o wan -j MASQUERADE
 # allow connections between lan and wan
-iptables -A FORWARD -i wan -o lan -j ACCEPT
 iptables -A FORWARD -i lan -o wan -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i wan -o lan -j ACCEPT
 ```
 Check rules:
 ```sh
