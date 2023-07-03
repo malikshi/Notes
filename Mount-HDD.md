@@ -25,7 +25,7 @@ EOF
 ```
 
 ## Setup Scheduled Task
-Go to System > Scheduled Task, then modified value with this,
+Go to System > Scheduled Task, then modified and add value with this,
 ```sh
 @reboot /usr/bin/auto-mount >/dev/null 2>&1
 */5 * * * * /usr/bin/auto-mount >/dev/null 2>&1
